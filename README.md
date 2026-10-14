@@ -81,7 +81,7 @@ upper-case statuses, missing channels) so the staging layer does real cleaning.
 **Prerequisites:** [Docker Desktop](https://www.docker.com/products/docker-desktop/) and Git.
 
 ```bash
-git clone https://github.com/<your-username>/dbt-airflow-pipeline.git
+git clone https://github.com/vikramdata/dbt-airflow-pipeline.git
 cd dbt-airflow-pipeline
 docker compose up -d --build
 ```
