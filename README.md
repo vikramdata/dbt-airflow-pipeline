@@ -1,4 +1,5 @@
 # E-commerce ELT Pipeline with Airflow + dbt
+![dbt CI](https://github.com/vikramdata/dbt-airflow-pipeline/actions/workflows/dbt-ci.yml/badge.svg)
 
 An end-to-end, containerised ELT pipeline. **Apache Airflow** orchestrates a daily load of
 synthetic e-commerce data into **PostgreSQL**, and **dbt** transforms it into tested,
