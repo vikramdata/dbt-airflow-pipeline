@@ -19,6 +19,36 @@ flowchart LR
     A{{Airflow DAG<br/>@daily}} -.orchestrates.-> G & S & ST & M & T
 ```
 
+## Screenshots
+
+**Airflow: 30-day backfill, every task green**
+![Airflow grid](docs/images/airflow-grid.png)
+
+**Airflow DAG**
+![Airflow graph](docs/images/airflow-graph.png)
+
+**dbt lineage: sources → staging → marts, plus snapshots**
+![dbt lineage](docs/images/dbt-lineage.png)
+
+**SCD Type 2: a product's full price history from dbt snapshots**
+![SCD2 history](docs/images/scd2-history.png)
+
+## Design decisions
+
+- **Idempotent loads.** The loader deletes and reloads a day's orders, so Airflow retries
+  and backfills never create duplicates.
+- **Ordered backfills.** `max_active_runs=1` makes days run in sequence, because snapshots
+  must see changes in the order they happened to build correct history.
+- **Tests gate the marts.** Staging tests run before marts are built, so bad source data
+  stops the pipeline instead of reaching reports. `--indirect-selection cautious` keeps
+  cross-layer tests from running too early.
+- **Incremental fact table.** `fct_orders` reprocesses only a 3-day window
+  (`delete+insert` on `order_id`), which catches late updates without full rebuilds.
+- **Two snapshot strategies.** Products use `timestamp` (the source has a reliable
+  `updated_at`); customers use `check` on `loyalty_tier` (shows the alternative when
+  timestamps can't be trusted).
+- **dbt in its own virtualenv** inside the Airflow image to avoid dependency conflicts.
+
 ### Airflow DAG: `shop_pipeline`
 
 `extract_load_raw → dbt_source_freshness → dbt_snapshot → dbt_run_staging → dbt_test_staging → dbt_run_marts → dbt_test_marts → dbt_docs_generate`
