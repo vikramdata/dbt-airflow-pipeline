@@ -1,0 +1,42 @@
+name: dbt CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  dbt-build:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: warehouse
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-retries 10
+    env:
+      DBT_PROFILES_DIR: ${{ github.workspace }}/dbt
+      DBT_HOST: localhost
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Load 3 days of synthetic data, snapshotting after each
+        working-directory: dbt
+        run: |
+          for d in 2026-01-01 2026-01-02 2026-01-03; do
+            python ../scripts/generate_data.py --date $d
+            dbt snapshot
+          done
+      - name: dbt build (run + test everything)
+        working-directory: dbt
+        run: dbt build

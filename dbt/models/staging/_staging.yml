@@ -1,0 +1,60 @@
+version: 2
+
+models:
+  - name: stg_customers
+    description: Cleaned customers. Emails are trimmed and lower-cased, names title-cased.
+    columns:
+      - name: customer_id
+        tests: [unique, not_null]
+      - name: email
+        tests: [not_null]
+      - name: loyalty_tier
+        tests:
+          - accepted_values:
+              values: [bronze, silver, gold, platinum]
+
+  - name: stg_products
+    description: Current product catalogue with prices converted from cents to dollars.
+    columns:
+      - name: product_id
+        tests: [unique, not_null]
+      - name: unit_price
+        tests: [not_null, positive_value]
+
+  - name: stg_orders
+    description: One row per order. Status normalised to lower case, missing channels set to 'unknown'.
+    columns:
+      - name: order_id
+        tests: [unique, not_null]
+      - name: customer_id
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_customers')
+              field: customer_id
+      - name: status
+        tests:
+          - accepted_values:
+              values: [completed, returned, cancelled]
+      - name: channel
+        tests:
+          - accepted_values:
+              values: [web, mobile_app, marketplace, unknown]
+
+  - name: stg_order_items
+    description: One row per order line with gross, discount and net amounts in dollars.
+    columns:
+      - name: order_item_id
+        tests: [unique, not_null]
+      - name: order_id
+        tests:
+          - relationships:
+              to: ref('stg_orders')
+              field: order_id
+      - name: product_id
+        tests:
+          - relationships:
+              to: ref('stg_products')
+              field: product_id
+      - name: net_amount
+        tests: [positive_value]

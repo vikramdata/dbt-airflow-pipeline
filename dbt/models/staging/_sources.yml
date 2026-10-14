@@ -1,0 +1,27 @@
+version: 2
+
+sources:
+  - name: raw
+    description: Synthetic e-commerce data loaded daily by scripts/generate_data.py
+    schema: raw
+    tables:
+      - name: customers
+        columns:
+          - name: customer_id
+            tests: [unique, not_null]
+      - name: products
+        columns:
+          - name: product_id
+            tests: [unique, not_null]
+      - name: orders
+        loaded_at_field: _loaded_at
+        freshness:
+          warn_after: {count: 24, period: hour}
+          error_after: {count: 48, period: hour}
+        columns:
+          - name: order_id
+            tests: [unique, not_null]
+      - name: order_items
+        columns:
+          - name: order_item_id
+            tests: [unique, not_null]

@@ -1,0 +1,50 @@
+version: 2
+
+models:
+  - name: fct_orders
+    description: >
+      One row per order with revenue totals. Built incrementally
+      (delete+insert on order_id, 3-day lookback window).
+    columns:
+      - name: order_id
+        tests: [unique, not_null]
+      - name: customer_id
+        tests:
+          - relationships:
+              to: ref('dim_customers')
+              field: customer_id
+      - name: net_revenue
+        tests: [not_null, positive_value]
+
+  - name: dim_customers
+    description: One row per customer with lifetime metrics, segment and tier-change count.
+    columns:
+      - name: customer_id
+        tests: [unique, not_null]
+      - name: customer_segment
+        tests:
+          - accepted_values:
+              values: [never_ordered, high_value, repeat, one_time]
+
+  - name: dim_products
+    description: Current version of each product plus price-change stats from the snapshot.
+    columns:
+      - name: product_id
+        tests: [unique, not_null]
+      - name: current_price
+        tests: [positive_value]
+
+  - name: product_price_history
+    description: Full SCD2 price history for every product.
+    columns:
+      - name: product_id
+        tests: [not_null]
+
+  - name: fct_daily_revenue
+    description: Daily KPIs - orders by status, net revenue, AOV and new sign-ups.
+    columns:
+      - name: order_date
+        tests: [unique, not_null]
+
+  - name: category_performance
+    description: Weekly completed-order revenue by product category.
